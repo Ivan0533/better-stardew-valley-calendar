@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星露谷物语四季日历</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6e8e6e 0%, #a3c1a3 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        header {
+            background: #4a6b4a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #e0f0e0;
+        }
+        
+        .controls {
+            background: #5a7c5a;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-group {
+            margin: 5px 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .control-label {
+            color: white;
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .control-label a {
+            color: #a3e4d7;
+            text-decoration: none;
+        }
+        
+        .control-label a:hover {
+            text-decoration: underline;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #5a7c5a;
+            overflow-x: auto;
+        }
+        
+        .tab-button {
+            padding: 15px 25px;
+            background: #5a7c5a;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            flex: 1;
+            min-width: 120px;
+            transition: background 0.3s;
+        }
+        
+        .tab-button:hover {
+            background: #6d8e6d;
+        }
+        
+        .tab-button.active {
+            background: #7ca37c;
+            font-weight: bold;
+        }
+        
+        .calendar-container {
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            min-width: 800px;
+        }
+        
+        .calendar th {
+            background: #7ca37c;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .calendar td {
+            border: 1px solid #d0dec2;
+            padding: 8px;
+            height: 140px;
+            vertical-align: top;
+            width: 14.28%;
+            min-width: 100px;
+        }
+        
+        .day-number {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #4a6b4a;
+            margin-bottom: 5px;
+            display: block;
+            text-align: left;
+        }
+        
+        .shop-row {
+            background: #f0f8f0;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        
+        .shop-row td {
+            height: auto;
+            padding: 5px;
+            vertical-align: middle;
+            min-width: 100px;
+        }
+        
+        .birthday {
+            background: #ffe4e4;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            display: block;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        
+        .birthday a {
+            color: #d32f2f;
+            text-decoration: none;
+        }
+        
+        .birthday a:hover {
+            text-decoration: underline;
+        }
+        
+        .birthday-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            width: 220px;
+            z-index: 100;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        
+        .birthday:hover .birthday-tooltip {
+            display: block;
+        }
+        
+        .favorite-items, .liked-items {
+            margin-top: 5px;
+        }
+        
+        .favorite-title, .liked-title {
+            font-weight: bold;
+            color: #c41e3a;
+        }
+        
+        .liked-title {
+            color: 1976d2;
+        }
+        
+        .festival {
+            background: #d4e8ff;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 0.9rem;
+            display: block;
+        }
+        
+        .festival a {
+            color: #1565c0;
+            text-decoration: none;
+        }
+        
+        .festival a:hover {
+            text-decoration: underline;
+        }
+        
+        .travel-cart {
+            background: #d8bfd8;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 0.9rem;
+            display: block;
+        }
+        
+        /* 在 CSS 中添加以下样式 */
+        .crop-planting {
+            background: #e8f5e9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 0.9rem;
+            display: block;
+        }
+
+        .crop-planting a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+
+        .crop-planting a:hover {
+            text-decoration: underline;
+        }
+
+        .oasis-shop {
+            background: #d4edda;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 0.8rem;
+            display: block;
+        }
+        
+        .desert-merchant {
+            background: #fff9d6;
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin: 2px 0;
+            font-size: 0.8rem;
+            display: block;
+        }
+        
+        .empty-space {
+            height: 18px;
+            display: block;
+        }
+        
+        .export-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 12px 25px;
+            background: #4a6b4a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+        }
+        
+        .export-btn:hover {
+            background: #5a7c5a;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #4a6b4a;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .footer-info {
+            margin: 5px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .calendar td {
+                height: 120px;
+                padding: 5px;
+                font-size: 0.8rem;
+            }
+            
+            .day-number {
+                font-size: 1rem;
+            }
+            
+            .shop-row td {
+                padding: 3px;
+                font-size: 0.7rem;
+            }
+            
+            .oasis-shop, .desert-merchant {
+                font-size: 0.7rem;
+            }
+
+.footer-info a {
+    color: #4a6b4a;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-info a:hover {
+    color: #3a553a;
+    text-decoration: underline;
+}
+
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>星露谷物语四季日历</h1>
+            <p class="description">查看四季日历、角色生日、节日活动及商店信息</p>
+            <p class="description">本界面显示的作物最晚种植时间中肥料和农业学家技能没有被计算在内。如需查阅，可点击作物名称并在<a href="https://zh.stardewvalleywiki.com/" target="_blank">星露谷wiki</a>的界面查阅。</p>
+        </header>
+        
+        <div class="controls">
+            <div class="control-group">
+                <span class="control-label">显示选项：</span>
+                <label class="control-label">
+                    <input type="checkbox" id="showOasis" checked> <a href="https://zh.stardewvalleywiki.com/%E7%BB%BF%E6%B4%B2" target="_blank">绿洲商店</a>
+                </label>
+                <label class="control-label">
+                    <input type="checkbox" id="showDesert" checked> <a href="https://zh.stardewvalleywiki.com/%E6%B2%99%E6%BC%A0%E5%95%86%E4%BA%BA" target="_blank">沙漠商人</a>
+                </label>
+                <!-- 在 controls 部分添加以下代码 -->
+                <label class="control-label">  
+                  <input type="checkbox" id="showCropPlanting" checked> <a href="https://zh.stardewvalleywiki.com/农作物" target="_blank">作物最晚种植时间</a>
+            </label>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('spring')">春季</button>
+            <button class="tab-button" onclick="showTab('summer')">夏季</button>
+            <button class="tab-button" onclick="showTab('fall')">秋季</button>
+            <button class="tab-button" onclick="showTab('winter')">冬季</button>
+        </div>
+        
+        <div class="calendar-container">
+            <!-- 春季日历 -->
+            <div id="spring-calendar" class="tab-content">
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>星期一</th>
+                            <th>星期二</th>
+                            <th>星期三</th>
+                            <th>星期四</th>
+                            <th>星期五</th>
+                            <th>星期六</th>
+                            <th>星期日</th>
+                        </tr>
+                    </thead>
+                    <tbody class="shop-row">
+                        <td>
+                            <span class="oasis-shop">椰子/200G（限10）<br>大号木屋地毯/2000G</span>
+                            <span class="desert-merchant">3干草/1万象晶球</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">仙人掌果子/150G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">纤维/5石头</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">万象晶球/500G（限3）<br>长版《翡翠山》（挂画）/5000G</span>
+                            <span class="desert-merchant">布料/3海蓝宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级生长激素/80G<br>古典地毯/2500G</span>
+                            <span class="desert-merchant">魔法糖冰棍/3五彩碎片（限1）</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">蜂蜜/200G<br>大号绿色地毯/2500G</span>
+                            <span class="desert-merchant">奶酪/1绿宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级保湿土壤/200G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">春季种子/2夏季种子<br>夏季种子/2秋季种子<br>秋季种子/2冬季种子<br>冬季种子/2春季种子</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">冰淇淋/240G<br>棕色长沙发/3000G</span>
+                            <span class="desert-merchant">楼梯/1翡翠</span>
+                        </td>
+                    </tbody>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="day-number">1</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">2</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">3</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">4</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%82%AF%E7%89%B9" target="_blank">肯特</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 烤榛子, 意式蕨菜烩饭</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类(除虚无蛋), 所有水果, 啤酒, 防风草, 蛤蜊, 黄水仙</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">5</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">6</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">7</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%88%98%E6%98%93%E6%96%AF" target="_blank">刘易斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 糖渍山药, 秋日盛享, 辣椒</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 椰子, 仙人掌果, 蓝莓, 意大利面, 玉米, 披萨, 果酱</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">8</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">9</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">10</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E6%96%87%E6%A3%AE%E7%89%B9" target="_blank">文森特</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 粉色蛋糕, 糖渍蔓越莓, 葡萄</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 披萨, 椰子, 藏红花, 黄水仙, 蛤蜊</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">11</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">12</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">13</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E5%A4%8F%E5%A8%81%E5%A4%B7%E5%AE%B4%E4%BC%9A" target="_blank">夏威夷宴会</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">14</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">15</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/大黄" target="_blank">大黄</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">16</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/花椰菜" target="_blank">花椰菜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">17</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">18</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E6%BD%98%E5%A7%86" target="_blank">潘姆</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 奶香防风汤, 糖渍山药, 淡色麦酒, 啤酒, 防风草, 仙人掌果</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有奶类, 所有蔬菜, 所有水果, 黑莓, 藏红花</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/青豆" target="_blank">青豆</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">19</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">20</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%B0%A2%E6%81%A9" target="_blank">谢恩</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 披萨, 芝香爆辣椒, 啤酒, 辣椒</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 所有水果, 黑莓, 淡色麦酒, 玉米, 小月季, 香豌豆, 咖啡</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/草莓" target="_blank">草莓</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">21</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/蓝爵" target="_blank">蓝爵</a></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">22</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/甘蓝菜" target="_blank">甘蓝菜</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/土豆" target="_blank">土豆</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/郁金香" target="_blank">郁金香</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">23</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">24</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E8%8A%B1%E8%88%9E%E8%8A%82" target="_blank">花舞节</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/防风草" target="_blank">防风草</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/蒜" target="_blank">蒜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">25</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">26</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E7%9A%AE%E5%9F%83%E5%B0%94" target="_blank">皮埃尔</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 炸花枝</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有奶类, 所有蛋类, 意大利面, 生鱼片, 茄子, 腌菜, 红酒, 香豌豆</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">27</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%89%BE%E7%B1%B3%E4%B8%BD" target="_blank">艾米丽</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 生存汉堡, 翡翠, 蓝宝石, 紫水晶, 红宝石, 黄玉, 玉石, 毛料, 羊毛/兔毛</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 沙拉, 秋日盛享, 豆子火锅, 红甘蓝炖萝卜, 火之石英, 寒霜之泪, 土之结晶, 蜂蜜, 藏红花, 黄水仙</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">28</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 其他季节日历省略以保持简洁 -->
+            <div id="summer-calendar" class="tab-content" style="display:none;">
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>星期一</th>
+                            <th>星期二</th>
+                            <th>星期三</th>
+                            <th>星期四</th>
+                            <th>星期五</th>
+                            <th>星期六</th>
+                            <th>星期日</th>
+                        </tr>
+                    </thead>
+                    <tbody class="shop-row">
+                        <td>
+                            <span class="oasis-shop">椰子/200G（限10）<br>大号木屋地毯/2000G</span>
+                            <span class="desert-merchant">3干草/1万象晶球</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">仙人掌果子/150G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">纤维/5石头</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">万象晶球/500G（限3）<br>长版《翡翠山》（挂画）/5000G</span>
+                            <span class="desert-merchant">布料/3海蓝宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级生长激素/80G<br>古典地毯/2500G</span>
+                            <span class="desert-merchant">魔法糖冰棍/3五彩碎片（限1）</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">蜂蜜/200G<br>大号绿色地毯/2500G</span>
+                            <span class="desert-merchant">奶酪/1绿宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级保湿土壤/200G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">春季种子/2夏季种子<br>夏季种子/2秋季种子<br>秋季种子/2冬季种子<br>冬季种子/2春季种子</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">冰淇淋/240G<br>棕色长沙发/3000G</span>
+                            <span class="desert-merchant">楼梯/1翡翠</span>
+                        </td>
+                    </tbody>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="day-number">1</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">2</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">3</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">4</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%B4%BE%E6%96%AF" target="_blank">贾斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 粉色蛋糕, 李子布丁, 小月季</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 椰子, 披萨, 曲奇, 矿工的款待, 藏红花, 黄水仙, 香豌豆, 郁金香</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">5</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">6</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">7</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">8</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E6%A0%BC%E6%96%AF" target="_blank">格斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 鱼肉塔可饼, 法式蜗牛, 橘子, 钻石</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 意大利面, 生鱼片, 煎薄饼, 披萨, 杏子</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">9</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">10</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E7%8E%9B%E9%B2%81" target="_blank">玛鲁</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 意式面, 香辣鳗鱼</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 铜锭, 铁锭, 披萨, 蜂蜜, 啤酒</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">11</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E5%A4%8F%E5%A8%81%E5%A4%B7%E5%AE%B4%E4%BC%9A" target="_blank">夏威夷宴会</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">12</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">13</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E4%BA%9A%E5%8E%86%E5%B1%B1%E5%A4%A7" target="_blank">亚历克斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 全套早餐, 鲑鱼晚宴</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 石英</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">14</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">15</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/杨桃" target="_blank">杨桃</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/蓝莓" target="_blank">蓝莓</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">16</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/甜瓜" target="_blank">甜瓜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">17</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%B1%B1%E5%A7%86" target="_blank">山姆</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 仙人掌果, 披萨</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有奶类, 披萨, 薯饼, 草莓</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/西红柿" target="_blank">西红柿</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/啤酒花" target="_blank">啤酒花</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">18</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/咖啡豆" target="_blank">咖啡豆</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">19</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%BE%B7%E7%B1%B3%E7%89%B9%E9%87%8C%E5%8E%84%E6%96%AF" target="_blank">德米特里厄斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 豆类火锅, 大米布丁, 冰激凌, 草莓</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 所有水果, 土之结晶, 紫蘑菇, 玉米, 美莓, 披萨, 蜂蜜</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/红叶卷心菜" target="_blank">红叶卷心菜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">20</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/夏季亮片" target="_blank">夏季亮片</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">21</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/虞美人花" target="_blank">虞美人花</a></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">22</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E7%9F%AE%E4%BA%BA" target="_blank">矮人</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 翡翠, 蓝宝石, 红宝石, 紫水晶, 黄玉, 玉石, 混沌晶球</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 火之石英, 寒霜之泪, 土之结晶, 矮人卷轴 I, 矮人卷轴 II, 矮人卷轴 III, 矮人卷轴 IV, 矮人头盔, 矮人装置</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/萝卜" target="_blank">萝卜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">23</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/辣椒" target="_blank">辣椒</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">24</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%A8%81%E5%88%A9" target="_blank">威利</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 鲶鱼, 章鱼, 海参, 鲟鱼, 南瓜, 钻石, 铱锭</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 虎鳟鱼, 鳕鱼, 蜂蜜, 金锭, 啤酒</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">25</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">26</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">27</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">28</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E6%9C%88%E5%85%89%E6%B0%B4%E6%AF%8D%E8%8A%82" target="_blank">月光水母节</a></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/上古水果" target="_blank">上古水果</a></span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 秋季日历 -->
+            <div id="fall-calendar" class="tab-content" style="display:none;">
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>星期一</th>
+                            <th>星期二</th>
+                            <th>星期三</th>
+                            <th>星期四</th>
+                            <th>星期五</th>
+                            <th>星期六</th>
+                            <th>星期日</th>
+                        </tr>
+                    </thead>
+                    <tbody class="shop-row">
+                        <td>
+                            <span class="oasis-shop">椰子/200G（限10）<br>大号木屋地毯/2000G</span>
+                            <span class="desert-merchant">3干草/1万象晶球</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">仙人掌果子/150G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">纤维/5石头</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">万象晶球/500G（限3）<br>长版《翡翠山》（挂画）/5000G</span>
+                            <span class="desert-merchant">布料/3海蓝宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级生长激素/80G<br>古典地毯/2500G</span>
+                            <span class="desert-merchant">魔法糖冰棍/3五彩碎片（限1）</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">蜂蜜/200G<br>大号绿色地毯/2500G</span>
+                            <span class="desert-merchant">奶酪/1绿宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级保湿土壤/200G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">春季种子/2夏季种子<br>夏季种子/2秋季种子<br>秋季种子/2冬季种子<br>冬季种子/2春季种子</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">冰淇淋/240G<br>棕色长沙发/3000G</span>
+                            <span class="desert-merchant">楼梯/1翡翠</span>
+                        </td>
+                    </tbody>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="day-number">1</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">2</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">3</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">4</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/宝石甜莓" target="_blank">宝石甜莓</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">5</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%89%BE%E5%88%A9%E6%AC%A7%E7%89%B9" target="_blank">艾利欧特</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 石榴, 鸭毛, 龙虾</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 龙虾, 螃蟹, 沙丁鱼, 南瓜汤, 炸鱿鱼</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">6</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">7</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">8</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">9</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">10</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">11</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E4%B9%94%E8%BF%AA" target="_blank">乔迪</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 时蔬炖菜, 煎薄饼, 香脆鲈鱼, 巧克力蛋糕, 大黄馅饼, 油炸海鳗, 钻石</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 所有奶类, 所有水果, 沙拉, 披萨, 生鱼片</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">12</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">13</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E9%98%BF%E6%AF%94%E7%9B%96%E5%B0%BC" target="_blank">阿比盖尔</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 七彩碎片, 兔子的脚, 黑莓馅饼, 巧克力蛋糕, 香辣鳗鱼, 河豚, 紫水晶, 南瓜</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 石英</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">14</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/玉米" target="_blank">玉米</a></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">15</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E6%A1%91%E8%BF%AA" target="_blank">桑迪</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 黄水仙, 香豌豆, 藏红花</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有水果, 羊奶, 大桶羊奶, 羊毛/兔毛, 布料</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/南瓜" target="_blank">南瓜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">16</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E6%98%9F%E9%9C%B2%E8%B0%B7%E5%B1%95%E8%A7%88%E4%BC%9A" target="_blank">星露谷展览会</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/玫瑰仙子" target="_blank">玫瑰仙子</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">17</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">18</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E7%8E%9B%E5%A6%AE" target="_blank">玛妮</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 所有奶类(小桶), 粉色蛋糕, 农民的午餐, 南瓜派, 钻石</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类(除虚无蛋), 香豌豆, 意大利面, 烤鱼, 玉米, 沙拉, 披萨, 蜂蜜, 蛋黄酱, 蓝调爵士, 大蒜, 啤酒</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/葡萄" target="_blank">葡萄</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/山药" target="_blank">山药</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/西兰花" target="_blank">西兰花</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">19</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">20</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/洋蓟" target="_blank">洋蓟</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/向日葵" target="_blank">向日葵</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">21</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/苋菜" target="_blank">苋菜</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/蔓越莓" target="_blank">蔓越莓</a></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">22</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/甜菜" target="_blank">甜菜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">23</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/茄子" target="_blank">茄子</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">24</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E4%B9%94%E6%B2%BB" target="_blank">乔治</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 香炒蘑菇, 韭葱</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 曲奇, 香脆鲈鱼, 奶酪茄香煲, 煎蛋饼, 奶香防风汤, 鳟鱼浓汤, 冰激凌, 沙拉, 披萨, 意大利面, 咖啡, 蜂蜜, 黄水仙</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/小白菜" target="_blank">小白菜</a></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/小麦" target="_blank">小麦</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">25</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">26</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">27</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E4%B8%87%E7%81%B5%E8%8A%82" target="_blank">万灵节</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">28</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 冬季日历 -->
+            <div id="winter-calendar" class="tab-content" style="display:none;">
+                <table class="calendar">
+                    <thead>
+                        <tr>
+                            <th>星期一</th>
+                            <th>星期二</th>
+                            <th>星期三</th>
+                            <th>星期四</th>
+                            <th>星期五</th>
+                            <th>星期六</th>
+                            <th>星期日</th>
+                        </tr>
+                    </thead>
+                    <tbody class="shop-row">
+                        <td>
+                            <span class="oasis-shop">椰子/200G（限10）<br>大号木屋地毯/2000G</span>
+                            <span class="desert-merchant">3干草/1万象晶球</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">仙人掌果子/150G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">纤维/5石头</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">万象晶球/500G（限3）<br>长版《翡翠山》（挂画）/5000G</span>
+                            <span class="desert-merchant">布料/3海蓝宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级生长激素/80G<br>古典地毯/2500G</span>
+                            <span class="desert-merchant">魔法糖冰棍/3五彩碎片（限1）</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">蜂蜜/200G<br>大号绿色地毯/2500G</span>
+                            <span class="desert-merchant">奶酪/1绿宝石</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">高级保湿土壤/200G<br>壁挂灯/500G</span>
+                            <span class="desert-merchant">春季种子/2夏季种子<br>夏季种子/2秋季种子<br>秋季种子/2冬季种子<br>冬季种子/2春季种子</span>
+                        </td>
+                        <td>
+                            <span class="oasis-shop">冰淇淋/240G<br>棕色长沙发/3000G</span>
+                            <span class="desert-merchant">楼梯/1翡翠</span>
+                        </td>
+                    </tbody>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <span class="day-number">1</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E7%A7%91%E7%BD%97%E5%B8%83%E6%96%AF" target="_blank">科罗布斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 钻石, 铱锭, 野山葵, 南瓜, 虚无蛋</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 金锭, 寒霜之泪</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">2</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">3</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%8E%B1%E5%B0%BC%E6%96%AF" target="_blank">莱纳斯</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 蓝莓挞, 海鲜大餐, 椰子, 仙人掌果, 山药</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 所有奶类, 所有水果, 所有植物, 奶酪, 沙拉, 披萨, 啤酒, 蜂蜜, 鸡油菌, 冬日根茎, 野山葵</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">4</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">5</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">6</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">7</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%8D%A1%E6%B4%9B%E7%90%B3" target="_blank">卡洛琳</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 鱼肉塔可饼, 夏日金光</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 玉米, 茄子, 番茄, 小月季, 藏红花, 香豌豆, 沙拉, 披萨, 生鱼片, 翡翠, 曲奇</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">8</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E5%86%B0%E9%9B%AA%E8%8A%82" target="_blank">冰雪节</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">9</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">10</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%A1%9E%E5%B7%B4%E6%96%AF%E8%92%82%E5%AE%89" target="_blank">塞巴斯蒂安</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 虚空蛋, 寒霜之泪, 生鱼片</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 黑曜石, 南瓜, 石英</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">11</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">12</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">13</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">14</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%93%88%E7%BB%B4" target="_blank">哈维</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 咖啡, 蔬菜</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有蛋类, 所有蔬菜, 所有水果, 炸鱿鱼, 面包</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">15</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">16</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">17</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">18</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">19</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">20</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E8%89%BE%E8%8A%99%E7%90%B3" target="_blank">艾芙琳</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 巧克力蛋糕, 美味填充料, 甜菜, 郁金香, 小月季, 钻石</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 所有奶类, 烤鱼, 咖啡, 黄水仙, 果酱, 披萨, 香炒蘑菇, 沙拉, 意大利面, 夏日金光, 香豌豆, 藏红花</div>
+                                    </div>
+                                </span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">21</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="day-number">22</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="crop-planting"><a href="https://zh.stardewvalleywiki.com/霜瓜" target="_blank">霜瓜</a></span>
+                            </td>
+                            <td>
+                                <span class="day-number">23</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">24</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">25</span>
+                                <span class="festival"><a href="https://zh.stardewvalleywiki.com/%E5%86%AC%E6%97%A5%E6%98%9F%E7%9B%9B%E5%AE%B4" target="_blank">冬日星盛宴</a></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">26</span>
+                                <span class="empty-space"></span>
+                                <span class="birthday">
+                                    <a href="https://zh.stardewvalleywiki.com/%E5%85%8B%E6%9E%97%E7%89%B9" target="_blank">克林特</a>
+                                    <div class="birthday-tooltip">
+                                        <div class="favorite-items"><span class="favorite-title">最爱:</span> 奶香洋蓟汤, 意式蕨菜烩饭, 翡翠, 蓝宝石, 红宝石, 紫水晶, 黄玉, 玉石, 金锭, 铱锭, 混沌晶球</div>
+                                        <div class="liked-items"><span class="liked-title">喜欢:</span> 铜锭, 铁锭, 披萨, 蜂蜜, 啤酒</div>
+                                    </div>
+                                </span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                            <td>
+                                <span class="day-number">27</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                            </td>
+                            <td>
+                                <span class="day-number">28</span>
+                                <span class="empty-space"></span>
+                                <span class="empty-space"></span>
+                                <span class="travel-cart">旅行货车</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <button class="export-btn" onclick="exportToExcel()">导出为Excel</button>
+
+    <script>
+        // 显示选中的选项卡
+        function showTab(season) {
+            // 隐藏所有选项卡内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // 取消所有选项卡按钮的激活状态
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 显示选中的选项卡内容
+            document.getElementById(season + '-calendar').style.display = 'block';
+            
+            // 激活选中的选项卡按钮
+            event.currentTarget.classList.add('active');
+        }
+        
+        // 导出为Excel功能
+        function exportToExcel() {
+            // 创建一个工作簿
+            let wb = XLSX.utils.book_new();
+            
+            // 获取所有季节的日历表格
+            const seasons = ['spring', 'summer', 'fall', 'winter'];
+            
+            seasons.forEach(season => {
+                let table = document.getElementById(season + '-calendar').getElementsByTagName('table')[0];
+                if (table) {
+                    // 创建表格副本，移除商店行
+                    let tableClone = table.cloneNode(true);
+                    let shopRow = tableClone.querySelector('.shop-row');
+                    if (shopRow) {
+                        shopRow.remove();
+                    }
+                    
+                    let ws = XLSX.utils.table_to_sheet(tableClone);
+                    XLSX.utils.book_append_sheet(wb, ws, season.charAt(0).toUpperCase() + season.slice(1));
+                }
+            });
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, "星露谷物语日历.xlsx");
+        }
+        
+        // 初始化显示控制
+        document.getElementById('showOasis').addEventListener('change', function() {
+            document.querySelectorAll('.oasis-shop').forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+        
+        document.getElementById('showDesert').addEventListener('change', function() {
+            document.querySelectorAll('.desert-merchant').forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>                <!-- 夏季日历内容 -->
+            </div>
+            
+            <div id="fall-calendar" class="tab-content" style="display:none;">
+                <!-- 秋季日历内容 -->
+            </div>
+            
+            <div id="winter-calendar" class="tab-content" style="display:none;">
+                <!-- 冬季日历内容 -->
+            </div>
+        </div>
+        
+        <button class="export-btn" onclick="exportToExcel()">导出为Excel</button>
+        
+<footer>
+    <div class="footer-info">星露谷物语四季日历 © 2025 | 仅适用于星露谷物语1.6.15版本</div>
+    <div class="footer-info">
+        <a href="https://www.xiaoheihe.cn/bbs/user_profile_share?user_id=1c5068f55899&h_src=heyboxapp" target="_blank">小黑盒@ssrspd33</a> | 
+        <a href="https://space.bilibili.com/481004146?spm_id_from=333.1007.0.0" target="_blank">B站@叫池子就好</a> | 
+        <a href="https://github.com/Ivan0533" target="_blank">GitHub@Ivan0533</a>
+    </div>
+    <div class="footer-info">开源项目，免费下载使用</div>
+</footer>
+    </div>
+
+    <script>
+        // 显示选中的选项卡
+        function showTab(season) {
+            // 隐藏所有选项卡内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // 取消所有选项卡按钮的激活状态
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // 显示选中的选项卡内容
+            document.getElementById(season + '-calendar').style.display = 'block';
+            
+            // 激活选中的选项卡按钮
+            event.currentTarget.classList.add('active');
+            
+            // 更新商店行的显示状态
+            updateShopRowDisplay();
+        }
+        
+        // 导出为Excel功能
+        function exportToExcel() {
+            // 创建一个工作簿
+            let wb = XLSX.utils.book_new();
+            
+            // 获取所有季节的日历表格
+            const seasons = ['spring', 'summer', 'fall', 'winter'];
+            
+            seasons.forEach(season => {
+                let table = document.getElementById(season + '-calendar').getElementsByTagName('table')[0];
+                if (table) {
+                    // 创建表格副本，移除商店行
+                    let tableClone = table.cloneNode(true);
+                    let shopRow = tableClone.querySelector('.shop-row');
+                    if (shopRow) {
+                        shopRow.remove();
+                    }
+                    
+                    let ws = XLSX.utils.table_to_sheet(tableClone);
+                    XLSX.utils.book_append_sheet(wb, ws, season.charAt(0).toUpperCase() + season.slice(1));
+                }
+            });
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, "星露谷物语日历.xlsx");
+        }
+        
+        // 更新商店行的显示状态
+        function updateShopRowDisplay() {
+            const showOasis = document.getElementById('showOasis').checked;
+            const showDesert = document.getElementById('showDesert').checked;
+            
+            // 获取当前显示的日历
+            const visibleCalendar = document.querySelector('.tab-content:not([style*="display: none"])');
+            if (!visibleCalendar) return;
+            
+            const shopRow = visibleCalendar.querySelector('.shop-row');
+            if (!shopRow) return;
+            
+            // 如果两者都不显示，则隐藏整个商店行
+            if (!showOasis && !showDesert) {
+                shopRow.style.display = 'none';
+            } else {
+                shopRow.style.display = '';
+                
+                // 更新单个商店项目的显示状态
+                shopRow.querySelectorAll('.oasis-shop').forEach(el => {
+                    el.style.display = showOasis ? 'block' : 'none';
+                });
+                
+                shopRow.querySelectorAll('.desert-merchant').forEach(el => {
+                    el.style.display = showDesert ? 'block' : 'none';
+                });
+            }
+        }
+        
+        // 初始化显示控制
+        document.getElementById('showOasis').addEventListener('change', function() {
+            document.querySelectorAll('.oasis-shop').forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+            updateShopRowDisplay();
+        });
+        
+        document.getElementById('showDesert').addEventListener('change', function() {
+            document.querySelectorAll('.desert-merchant').forEach(el => {
+                el.style.display = this.checked ? 'block' : 'none';
+            });
+            updateShopRowDisplay();
+        });
+        
+        // 初始化页面
+        window.addEventListener('load', function() {
+            // 初始更新商店行显示状态
+            updateShopRowDisplay();
+        });
+
+// 添加作物种植时间显示控制
+document.getElementById('showCropPlanting').addEventListener('change', function() {
+    document.querySelectorAll('.crop-planting').forEach(el => {
+        el.style.display = this.checked ? 'block' : 'none';
+    });
+    updateShopRowDisplay(); // 确保更新显示
+});
+
+// 修改 updateShopRowDisplay 函数，添加作物显示控制
+function updateShopRowDisplay() {
+    const showOasis = document.getElementById('showOasis').checked;
+    const showDesert = document.getElementById('showDesert').checked;
+    const showCrop = document.getElementById('showCropPlanting').checked;
+    
+    // 获取当前显示的日历
+    const visibleCalendar = document.querySelector('.tab-content:not([style*="display: none"])');
+    if (!visibleCalendar) return;
+    
+    const shopRow = visibleCalendar.querySelector('.shop-row');
+    if (!shopRow) return;
+    
+    // 如果两者都不显示，则隐藏整个商店行
+    if (!showOasis && !showDesert) {
+        shopRow.style.display = 'none';
+    } else {
+        shopRow.style.display = '';
+        
+        // 更新单个商店项目的显示状态
+        shopRow.querySelectorAll('.oasis-shop').forEach(el => {
+            el.style.display = showOasis ? 'block' : 'none';
+        });
+        
+        shopRow.querySelectorAll('.desert-merchant').forEach(el => {
+            el.style.display = showDesert ? 'block' : 'none';
+        });
+    }
+    
+    // 更新作物显示状态
+    document.querySelectorAll('.crop-planting').forEach(el => {
+        el.style.display = showCrop ? 'block' : 'none';
+    });
+}
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# 忽略 macOS 系统自带的垃圾文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 忽略 VSCode 编辑器生成的配置目录和文件
+# 注意：如果你希望共享项目级别的设置（如推荐扩展），可以删除 `.vscode/` 这一行
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# 忽略日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# 忽略操作系统生成的临时文件
+Thumbs.db
+
+# 忽略依赖安装目录（如果你以后会使用 npm/yarn 来安装库，比如 Bootstrap）
+node_modules/
+/dist
+
+# 忽略本地环境变量文件（非常重要！绝对不能提交）
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 忽略构建输出目录（如果你以后使用打包工具如 Webpack, Vite）
+dist/
+build/
